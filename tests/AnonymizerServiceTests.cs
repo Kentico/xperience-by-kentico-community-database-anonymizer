@@ -23,9 +23,9 @@ namespace XperienceCommunity.DatabaseAnonymizer.Tests
         private readonly IDataConnection dataConnection = Substitute.For<IDataConnection>();
         private readonly AnonymizerService anonymizerService = new(Substitute.For<IAnonymizationLogger>(), new TestTableManager());
         private readonly string selectQuery = $"SELECT {ANON_COLUMN}, {NULL_COLUMN}, {TestTableManager.PKEY} FROM {FAKE_TABLE}" +
-            $" ORDER BY {TestTableManager.PKEY} OFFSET " + "{0}" + " ROWS FETCH NEXT 500 ROWS ONLY";
+            $" ORDER BY {TestTableManager.PKEY} OFFSET " + "{0} ROWS FETCH NEXT 500 ROWS ONLY";
         private readonly string updateQueryPattern = $"UPDATE {FAKE_TABLE} SET {ANON_COLUMN} = '[a-zA-Z0-9]+',{NULL_COLUMN} = NULL" +
-            " WHERE primary_key = {0}";
+            $" WHERE {TestTableManager.PKEY} = " + "{0}";
         private readonly TablesConfiguration tablesConfiguration = new()
         {
             Tables = [
