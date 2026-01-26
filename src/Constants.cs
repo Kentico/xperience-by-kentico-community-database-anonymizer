@@ -1,6 +1,6 @@
 ﻿namespace XperienceCommunity.DatabaseAnonymizer
 {
-    internal static class Constants
+    public static class Constants
     {
         public const string TABLES_FILENAME = "anonymizer_tables.json";
 

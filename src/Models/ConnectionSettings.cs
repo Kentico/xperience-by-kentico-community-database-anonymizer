@@ -5,7 +5,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
     /// <summary>
     /// Represents the settings required to connect to the Kentico database.
     /// </summary>
-    internal class ConnectionSettings
+    public class ConnectionSettings
     {
         /// <summary>
         /// The data source.

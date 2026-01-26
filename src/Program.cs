@@ -11,6 +11,7 @@ var builder = new ContainerBuilder();
 var assemblies = Assembly.GetExecutingAssembly();
 
 builder.RegisterType<App>();
+builder.RegisterType<CMS.DataProviderSQL.TableManager>().As<ITableManager>();
 builder.RegisterAssemblyTypes(assemblies)
     .Where(t => t.IsClass
         && !t.IsAbstract

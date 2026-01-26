@@ -5,7 +5,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
     /// <summary>
     /// Contains methods for anonymizing database records.
     /// </summary>
-    internal interface IAnonymizerService : IService
+    public interface IAnonymizerService : IService
     {
         /// <summary>
         /// Runs the anonymization process.

@@ -5,24 +5,19 @@ using System.Text;
 using CMS;
 using CMS.DataEngine;
 using CMS.Helpers;
+using CMS.Membership;
 
 using XperienceCommunity.DatabaseAnonymizer.Models;
 using XperienceCommunity.DatabaseAnonymizer.Services;
 
-using TableManager = CMS.DataProviderSQL.TableManager;
-
 [assembly: RegisterImplementation(typeof(IAnonymizerService), typeof(AnonymizerService))]
 namespace XperienceCommunity.DatabaseAnonymizer.Services
 {
-    internal class AnonymizerService(IAnonymizationLogger anonmyzationLogger) : IAnonymizerService
+    public class AnonymizerService(IAnonymizationLogger anonmyzationLogger, ITableManager tableManager) : IAnonymizerService
     {
-        private TableManager? mTableManager;
         private const int BATCH_SIZE = 500;
         private readonly IAnonymizationLogger anonymizationLogger = anonmyzationLogger;
         private readonly char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".ToCharArray();
-
-
-        private TableManager TableManager => mTableManager ??= new TableManager();
 
 
         public void Anonymize(ConnectionSettings connectionSettings, TablesConfiguration tablesConfiguration)
@@ -42,7 +37,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(table.TableName);
             anonymizationLogger.LogTableStart(table.TableName);
-            if (!TableManager.TableExists(table.TableName))
+            if (!tableManager.TableExists(table.TableName))
             {
                 anonymizationLogger.LogError($"Skipped nonexistent table {table.TableName}");
 
@@ -56,8 +51,8 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
                 return;
             }
 
-            var identityColumns = TableManager.GetPrimaryKeyColumns(table.TableName);
-            if (!identityColumns.Any())
+            var identityColumns = tableManager.GetPrimaryKeyColumns(table.TableName);
+            if (identityColumns.Count == 0)
             {
                 anonymizationLogger.LogError($"Skipped table {table.TableName} with no identity columns");
 
@@ -84,15 +79,9 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
         }
 
 
-        private string? AnonymizeValue(object value)
+        private string AnonymizeValue(string value)
         {
-            string stringRepresentation = ValidationHelper.GetString(value, string.Empty);
-            if (string.IsNullOrEmpty(stringRepresentation))
-            {
-                return null;
-            }
-
-            int size = stringRepresentation.Length;
+            int size = value.Length;
             byte[] data = new byte[4 * size];
             using (var crypto = RandomNumberGenerator.Create())
             {
@@ -140,7 +129,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
 
 
         /// <summary>
-        /// Gets a SQL UPDATE statement used to anonymize or deanonymize the columns of a record.
+        /// Gets a SQL UPDATE statement used to anonymize and null the columns of a record.
         /// </summary>
         /// <param name="row">The record to update.</param>
         /// <param name="tableConfiguration">The configuration of the current table being processed.</param>
@@ -150,45 +139,66 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
             TableConfiguration tableConfiguration,
             IEnumerable<string> identityColumns)
         {
-            var values = new List<string>();
+            var setStatements = new List<string>();
             // Process anonymize columns
             foreach (string column in tableConfiguration.AnonymizeColumns)
             {
                 object currentValue = row[column];
-                if (currentValue is null)
+                string currentValueString = ValidationHelper.GetString(currentValue, string.Empty);
+                if (SkipProcessing(currentValueString, column))
                 {
                     continue;
                 }
 
-                string? newValue = AnonymizeValue(currentValue);
-                if (newValue is null)
-                {
-                    continue;
-                }
-
-                values.Add($"{column} = '{newValue}'");
+                string newValue = AnonymizeValue(currentValueString);
+                setStatements.Add($"{column} = '{newValue}'");
             }
 
             // Process null columns
             foreach (string column in tableConfiguration.NullColumns)
             {
                 object currentValue = row[column];
-                if (currentValue is null)
+                string currentValueString = ValidationHelper.GetString(currentValue, string.Empty);
+                if (SkipProcessing(currentValueString, column))
                 {
                     continue;
                 }
 
-                values.Add($"{column} = NULL");
+                setStatements.Add($"{column} = NULL");
             }
 
-            if (!values.Any())
+            if (setStatements.Count == 0)
             {
                 return string.Empty;
             }
 
             var where = identityColumns.Select(col => $"{col} = {row[col]}");
 
-            return $"UPDATE {tableConfiguration.TableName} SET {string.Join(",", values)} WHERE {string.Join(" AND ", where)}";
+            return $"UPDATE {tableConfiguration.TableName} SET {string.Join(",", setStatements)} WHERE {string.Join(" AND ", where)}";
+        }
+
+
+        /// <summary>
+        /// Returns true if the column should not be anonymized or nulled. Always returns <c>true</c> for null or empty value.
+        /// </summary>
+        /// <param name="value">The current value of the column.</param>
+        /// <param name="column">The column name.</param>
+        private static bool SkipProcessing(string value, string column)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return true;
+            }
+
+            if (column.Equals(nameof(UserInfo.UserName), StringComparison.InvariantCultureIgnoreCase) &&
+                (value.Equals("administrator", StringComparison.InvariantCultureIgnoreCase) ||
+                 value.Equals("kentico-system-service", StringComparison.InvariantCultureIgnoreCase) ||
+                 value.Equals("public", StringComparison.InvariantCultureIgnoreCase)))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

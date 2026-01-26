@@ -10,7 +10,7 @@ using XperienceCommunity.DatabaseAnonymizer.Services;
 [assembly: RegisterImplementation(typeof(IAnonymizationLogger), typeof(AnonymizationLogger))]
 namespace XperienceCommunity.DatabaseAnonymizer.Services
 {
-    internal class AnonymizationLogger : IAnonymizationLogger
+    public class AnonymizationLogger : IAnonymizationLogger
     {
         private readonly Stopwatch mStopwatch = new();
         private readonly Dictionary<string, int> mModifications = [];
@@ -21,13 +21,12 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
             mStopwatch.Stop();
             double seconds = mStopwatch.ElapsedMilliseconds / (double)1000;
             int minutes = ValidationHelper.GetInteger(Math.Ceiling(seconds / 60), 0);
-            AnsiConsole.MarkupLine($"[{Constants.SUCCESS_COLOR}]Finished successfully at {DateTime.Now.ToShortDateString()}" +
-                $" {DateTime.Now.ToShortTimeString()} ({minutes} minutes)[/]");
+            AnsiConsole.MarkupLine($"[{Constants.SUCCESS_COLOR}]Finished successfully at {DateTime.Now:d}" +
+                $" {DateTime.Now:t} ({minutes} minutes)[/]");
         }
 
 
-        public void LogError(string message) =>
-            AnsiConsole.MarkupLine($"[{Constants.ERROR_COLOR}]{message}[/]");
+        public void LogError(string message) => AnsiConsole.MarkupLine($"[{Constants.ERROR_COLOR}]{message}[/]");
 
 
         public void LogModification(string table, int rowsModified)
@@ -37,10 +36,8 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
                 return;
             }
 
-            if (!mModifications.ContainsKey(table))
+            if (mModifications.TryAdd(table, rowsModified))
             {
-                mModifications.Add(table, rowsModified);
-
                 return;
             }
 
@@ -60,16 +57,15 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
         }
 
 
-        public void LogTableStart(string tableName) =>
-            AnsiConsole.MarkupLine($"Processing table {tableName}...");
+        public void LogTableStart(string tableName) => AnsiConsole.MarkupLine($"Processing table {tableName}...");
 
 
         public void LogStart()
         {
             mStopwatch.Start();
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine($"[{Constants.EMPHASIS_COLOR}]Anonymization process started at {DateTime.Now.ToShortDateString()}" +
-                $" {DateTime.Now.ToShortTimeString()}[/]");
+            AnsiConsole.MarkupLine($"[{Constants.EMPHASIS_COLOR}]Anonymization process started at {DateTime.Now:d}" +
+                $" {DateTime.Now:t}[/]");
         }
     }
 }

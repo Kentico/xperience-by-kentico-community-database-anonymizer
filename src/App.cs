@@ -13,7 +13,7 @@ namespace XperienceCommunity.DatabaseAnonymizer
     /// <summary>
     /// The main entry point for the console application which supports Dependency Injection.
     /// </summary>
-    internal class App(IAnonymizerService anonymizerService, IAnonymizationTableProvider anonymizationTableProvider)
+    public class App(IAnonymizerService anonymizerService, IAnonymizationTableProvider anonymizationTableProvider)
     {
         private readonly IAnonymizerService anonymizerService = anonymizerService;
         private readonly IAnonymizationTableProvider anonymizationTableProvider = anonymizationTableProvider;

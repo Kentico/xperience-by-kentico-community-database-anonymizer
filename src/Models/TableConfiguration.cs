@@ -3,7 +3,7 @@
     /// <summary>
     /// Represents a table and its columns used during anonymization.
     /// </summary>
-    internal class TableConfiguration
+    public class TableConfiguration
     {
         /// <summary>
         /// The table name.
