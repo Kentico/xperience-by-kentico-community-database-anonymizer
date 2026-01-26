@@ -10,20 +10,14 @@ using CMS.Membership;
 using XperienceCommunity.DatabaseAnonymizer.Models;
 using XperienceCommunity.DatabaseAnonymizer.Services;
 
-using TableManager = CMS.DataProviderSQL.TableManager;
-
 [assembly: RegisterImplementation(typeof(IAnonymizerService), typeof(AnonymizerService))]
 namespace XperienceCommunity.DatabaseAnonymizer.Services
 {
-    internal class AnonymizerService(IAnonymizationLogger anonmyzationLogger) : IAnonymizerService
+    public class AnonymizerService(IAnonymizationLogger anonmyzationLogger, ITableManager tableManager) : IAnonymizerService
     {
-        private TableManager? mTableManager;
         private const int BATCH_SIZE = 500;
         private readonly IAnonymizationLogger anonymizationLogger = anonmyzationLogger;
         private readonly char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".ToCharArray();
-
-
-        private TableManager TableManager => mTableManager ??= new TableManager();
 
 
         public void Anonymize(ConnectionSettings connectionSettings, TablesConfiguration tablesConfiguration)
@@ -43,7 +37,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(table.TableName);
             anonymizationLogger.LogTableStart(table.TableName);
-            if (!TableManager.TableExists(table.TableName))
+            if (!tableManager.TableExists(table.TableName))
             {
                 anonymizationLogger.LogError($"Skipped nonexistent table {table.TableName}");
 
@@ -57,7 +51,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Services
                 return;
             }
 
-            var identityColumns = TableManager.GetPrimaryKeyColumns(table.TableName);
+            var identityColumns = tableManager.GetPrimaryKeyColumns(table.TableName);
             if (identityColumns.Count == 0)
             {
                 anonymizationLogger.LogError($"Skipped table {table.TableName} with no identity columns");

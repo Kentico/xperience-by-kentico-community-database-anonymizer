@@ -8,7 +8,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
     /// <summary>
     /// Represents the physical configuration file containing table and column names to anonymize.
     /// </summary>
-    internal class TablesConfiguration
+    public class TablesConfiguration
     {
         /// <summary>
         /// The <see cref="TableConfiguration"/>s used during anonymization. Can be overridden via customization to the
