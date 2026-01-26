@@ -8,7 +8,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Tests
     /// </summary>
     public class AnonymizationTableProviderTests
     {
-        private readonly IAnonymizationTableProvider tableProvider = new AnonymizationTableProvider();
+        private readonly AnonymizationTableProvider tableProvider = new();
 
 
         [TearDown]
