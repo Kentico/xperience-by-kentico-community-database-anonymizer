@@ -52,7 +52,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Tests
             dataConnection.ExecuteQuery(string.Format(selectQuery, 0), null, QueryTypeEnum.SQLQuery, false).Returns(CreateDataSet(5));
             dataConnection.ExecuteQuery(string.Format(selectQuery, 500), null, QueryTypeEnum.SQLQuery, false).Returns(CreateDataSet(0));
 
-            Service.InitializeContainer();
+            EnsureServiceContainer();
         }
 
 
