@@ -9,7 +9,7 @@ using XperienceCommunity.DatabaseAnonymizer.Services;
 [assembly: RegisterImplementation(typeof(IAnonymizationTableProvider), typeof(AnonymizationTableProvider), Priority = RegistrationPriority.Fallback)]
 namespace XperienceCommunity.DatabaseAnonymizer.Services
 {
-    public class AnonymizationTableProvider : IAnonymizationTableProvider
+    internal class AnonymizationTableProvider : IAnonymizationTableProvider
     {
         public async Task<TablesConfiguration> GetTablesConfig()
         {

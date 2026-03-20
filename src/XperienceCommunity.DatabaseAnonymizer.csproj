@@ -1,5 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+    <InternalsVisibleTo Include="XperienceCommunity.DatabaseAnonymizer.Tests" />
+  </ItemGroup>
+	
+  <ItemGroup>
     <PackageReference Include="Autofac" />
     <PackageReference Include="Kentico.Xperience.Core" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />

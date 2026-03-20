@@ -3,7 +3,7 @@
     /// <summary>
     /// Contains methods for logging anonymization operations.
     /// </summary>
-    public interface IAnonymizationLogger : IService
+    internal interface IAnonymizationLogger : IService
     {
         /// <summary>
         /// Logs information regarding the end of anonymization.

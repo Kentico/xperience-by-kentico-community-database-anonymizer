@@ -10,7 +10,7 @@ using XperienceCommunity.DatabaseAnonymizer.Services;
 [assembly: RegisterImplementation(typeof(IAnonymizationLogger), typeof(AnonymizationLogger))]
 namespace XperienceCommunity.DatabaseAnonymizer.Services
 {
-    public class AnonymizationLogger : IAnonymizationLogger
+    internal class AnonymizationLogger : IAnonymizationLogger
     {
         private readonly Stopwatch mStopwatch = new();
         private readonly Dictionary<string, int> mModifications = [];

@@ -13,7 +13,7 @@ using XperienceCommunity.DatabaseAnonymizer.Services;
 [assembly: RegisterImplementation(typeof(IAnonymizerService), typeof(AnonymizerService))]
 namespace XperienceCommunity.DatabaseAnonymizer.Services
 {
-    public class AnonymizerService(IAnonymizationLogger anonmyzationLogger, ITableManager tableManager) : IAnonymizerService
+    internal class AnonymizerService(IAnonymizationLogger anonmyzationLogger, ITableManager tableManager) : IAnonymizerService
     {
         private const int BATCH_SIZE = 500;
         private readonly IAnonymizationLogger anonymizationLogger = anonmyzationLogger;
