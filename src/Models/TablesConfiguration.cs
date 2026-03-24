@@ -52,6 +52,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
                 TableName = "CMS_User",
                 AnonymizeColumns =
                 [
+                    nameof(UserInfo.UserName),
                     nameof(UserInfo.FirstName),
                     nameof(UserInfo.LastName),
                     nameof(UserInfo.Email),

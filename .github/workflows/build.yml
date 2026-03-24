@@ -2,34 +2,28 @@ name: build
 
 on:
   push:
-    branches: [ "main", "xbk" ]
+    branches: ["main", "xbk"]
   pull_request:
-    branches: [ "main", "xbk" ]
+    branches: ["main", "xbk"]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-        global-json-file: global.json
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          global-json-file: global.json
 
-    - name: Restore dependencies
-      run: dotnet restore
-      working-directory: src
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Build
-      run: dotnet build --no-restore
-      working-directory: src
+      - name: Build
+        run: dotnet build --no-restore
 
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: NuGet
-        path: ./**/*.nupkg
+      - name: Test
+        run: dotnet test --no-build --verbosity normal

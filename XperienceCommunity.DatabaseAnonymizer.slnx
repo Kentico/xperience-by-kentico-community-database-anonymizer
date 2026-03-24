@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/XperienceCommunity.DatabaseAnonymizer.csproj" />
+  <Project Path="tests/XperienceCommunity.DatabaseAnonymizer.Tests.csproj" />
+</Solution>

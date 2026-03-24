@@ -1,0 +1,11 @@
+{
+  "Tables": [
+    {
+      "TableName": "My_Custom_Table",
+      "AnonymizeColumns": [
+        "My_Column"
+      ],
+      "NullColumns": []
+    }
+  ]
+}
