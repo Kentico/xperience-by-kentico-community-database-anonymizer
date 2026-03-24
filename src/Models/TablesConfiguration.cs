@@ -59,27 +59,6 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
                 ]
             },
             new TableConfiguration() {
-                TableName = "OM_Account",
-                AnonymizeColumns =
-                [
-                    nameof(AccountInfo.AccountName),
-                    nameof(AccountInfo.AccountAddress1),
-                    nameof(AccountInfo.AccountAddress2),
-                    nameof(AccountInfo.AccountCity),
-                    nameof(AccountInfo.AccountZIP),
-                    nameof(AccountInfo.AccountWebSite),
-                    nameof(AccountInfo.AccountPhone),
-                    nameof(AccountInfo.AccountEmail),
-                    nameof(AccountInfo.AccountFax),
-                    nameof(AccountInfo.AccountNotes),
-                ],
-                NullColumns =
-                [
-                    nameof(AccountInfo.AccountCountryID),
-                    nameof(AccountInfo.AccountStateID),
-                ],
-            },
-            new TableConfiguration() {
                 TableName = "OM_Contact",
                 AnonymizeColumns =
                 [
