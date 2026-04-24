@@ -1,40 +1,5 @@
 # Usage Guide
 
-## Providing connection details
-
-When you run `xperience-anonymizer`, you can provide database connection details in one of two ways:
-
-### Interactive prompts
-
-Run the tool with no arguments:
-
-```powershell
-xperience-anonymizer
-```
-
-You will be prompted to choose between:
-
-- **Full connection string** — paste a complete SQL connection string (input is masked).
-- **Individual fields** — enter the data source, user ID, and password separately. The tool will then list the available databases on the server for you to pick from.
-
-### Command-line argument
-
-You can skip the connection prompts by passing a full connection string as an argument:
-
-```powershell
-xperience-anonymizer --connection-string "Server=.;Database=MyDb;User Id=sa;Password=***"
-```
-
-Supported forms:
-
-- `--connection-string <value>`
-- `--connection-string=<value>`
-- `-c <value>`
-
-If the connection string includes an `Initial Catalog` (or `Database`), the database selection prompt is skipped. Otherwise, the tool will list the available databases on the server for you to pick from.
-
-> **Note:** A connection string passed on the command line may be visible in your shell history and process listings. Prefer the interactive prompt (which masks input) when running against sensitive environments.
-
 ## Supported tables
 
 See [`TablesConfiguration`](/src/Models/TablesConfiguration.cs) for a full list of supported tables and columns. The list can be customized using [this guide](#adding-your-tables).
@@ -73,8 +38,11 @@ For example, you may want to anonymize data entered in your forms:
   "Tables": [
     {
       "TableName": "DancingGoat_ContactUs",
-      "AnonymizeColumns": ["Name", "Email"]
-    }
+      "AnonymizeColumns": [
+        "Name",
+        "Email",
+      ]
+    },
     // Other tables...
   ]
 }
