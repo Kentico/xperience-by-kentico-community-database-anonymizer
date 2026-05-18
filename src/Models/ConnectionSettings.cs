@@ -214,7 +214,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
                 return string.IsNullOrEmpty(name) ? null : name;
             }
 
-            return null;
+            return builder.ConnectionString;
         }
     }
 }

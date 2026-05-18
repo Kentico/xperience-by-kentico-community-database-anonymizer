@@ -21,4 +21,4 @@ builder.RegisterAssemblyTypes(assemblies)
 
 CMSApplication.PreInit();
 
-await builder.Build().Resolve<App>().Run(args);
+await builder.Build().Resolve<App>().Run();

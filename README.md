@@ -45,13 +45,7 @@ Run the following command from a command prompt such as Powershell:
 xperience-anonymizer
 ```
 
-The tool will prompt you to provide connection details for the Kentico database, then run the anonymization process. You can either enter the individual connection fields (data source, user, password) when prompted, or provide a full SQL connection string — either via the interactive prompt or by passing it as a command-line argument:
-
-```powershell
-xperience-anonymizer --connection-string "Server=.;Database=MyDb;User Id=sa;Password=***"
-```
-
-The `-c` short form is also supported. If the connection string already contains an `Initial Catalog`/`Database`, the database selection prompt is skipped.
+The tool will prompt you to provide connection details for the Kentico database, then run the anonymization process.
 
 ## Full Instructions
 

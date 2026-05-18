@@ -28,7 +28,7 @@ namespace XperienceCommunity.DatabaseAnonymizer
                 AnsiConsole.Markup($"[{Constants.EMPHASIS_COLOR}]The anonymization process is irreversible! Please make sure you are" +
                     $" executing the process against a backup.[/]");
                 AnsiConsole.WriteLine();
-                var connectionSettings = GetConnectionSettings(args);
+                var connectionSettings = GetConnectionSettings();
                 anonymizerService.Anonymize(connectionSettings, tablesConfig);
             }
             catch (Exception ex)
@@ -39,7 +39,7 @@ namespace XperienceCommunity.DatabaseAnonymizer
         }
 
 
-        private static ConnectionSettings GetConnectionSettings(string[]? args)
+        private static ConnectionSettings GetConnectionSettings()
         {
             string? connectionStringArg = TryGetConnectionStringArg(args);
             var connectionSettings = connectionStringArg is not null
