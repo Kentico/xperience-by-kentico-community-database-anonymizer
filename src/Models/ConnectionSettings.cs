@@ -46,49 +46,6 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
 
 
         /// <summary>
-        /// Initializes a new instance of <see cref="ConnectionSettings"/>. If <paramref name="connectionString"/> is provided,
-        /// properties are initialized according to the values detected in the string.
-        /// </summary>
-        /// <param name="connectionString">A full SQL connection string.</param>
-        public ConnectionSettings(string? connectionString = null)
-        {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                return;
-            }
-
-            // Parse with the lenient base builder so keywords unknown to System.Data.SqlClient
-            // (e.g. "Command Timeout") do not throw during parsing...
-            var parsed = new DbConnectionStringBuilder()
-            {
-                ConnectionString = connectionString
-            };
-
-            // ...then copy only keywords supported by System.Data.SqlClient, since Kentico uses
-            // that provider internally and will throw on unknown keywords when opening the connection.
-            var sqlBuilder = new SqlConnectionStringBuilder();
-            foreach (string key in parsed.Keys)
-            {
-                try
-                {
-                    sqlBuilder[key] = parsed[key];
-                }
-                catch (ArgumentException)
-                {
-                    // Silently drop keywords the SqlClient provider does not recognize
-                    // (e.g. "Command Timeout" is only supported by Microsoft.Data.SqlClient).
-                }
-            }
-
-            DataSource = sqlBuilder.DataSource;
-            UserID = sqlBuilder.UserID;
-            Password = sqlBuilder.Password;
-            DatabaseName = GetDatabaseFromConnectionString(connectionString);
-            IntegratedSecurity = sqlBuilder.IntegratedSecurity;
-        }
-
-
-        /// <summary>
         /// Displays a prompt to select a database from the provided data source.
         /// </summary>
         public void SetDatabaseFromPrompt()
@@ -144,6 +101,46 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
 
 
         /// <summary>
+        /// Creates a new <see cref="ConnectionSettings"/> from a connection string.
+        /// </summary>
+        /// <param name="connectionString">A full SQL connection string.</param>
+        public static ConnectionSettings FromConnectionString(string connectionString)
+        {
+            // Parse with the lenient base builder so keywords unknown to System.Data.SqlClient
+            // (e.g. "Command Timeout") do not throw during parsing...
+            var parsed = new DbConnectionStringBuilder()
+            {
+                ConnectionString = connectionString
+            };
+
+            // ...then copy only keywords supported by System.Data.SqlClient, since Kentico uses
+            // that provider internally and will throw on unknown keywords when opening the connection.
+            var sqlBuilder = new SqlConnectionStringBuilder();
+            foreach (string key in parsed.Keys)
+            {
+                try
+                {
+                    sqlBuilder[key] = parsed[key];
+                }
+                catch (ArgumentException)
+                {
+                    // Silently drop keywords the SqlClient provider does not recognize
+                    // (e.g. "Command Timeout" is only supported by Microsoft.Data.SqlClient).
+                }
+            }
+
+            return new ConnectionSettings()
+            {
+                DataSource = sqlBuilder.DataSource,
+                UserID = sqlBuilder.UserID,
+                Password = sqlBuilder.Password,
+                DatabaseName = GetDatabaseFromConnectionString(connectionString),
+                IntegratedSecurity = sqlBuilder.IntegratedSecurity
+            };
+        }
+
+
+        /// <summary>
         /// Creates a new <see cref="ConnectionSettings"/> from interactive user prompts.
         /// </summary>
         public static ConnectionSettings FromPrompts()
@@ -161,7 +158,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
                 string connectionString = AnsiConsole.Prompt(new TextPrompt<string>($"[{Constants.PROMPT_COLOR}]Connection string:[/] ")
                 { IsSecret = true });
 
-                return new ConnectionSettings(connectionString);
+                return FromConnectionString(connectionString);
             }
 
             // Create connection settings from prompts

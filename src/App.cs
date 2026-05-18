@@ -43,7 +43,7 @@ namespace XperienceCommunity.DatabaseAnonymizer
         {
             string? connectionStringArg = TryGetConnectionStringArg(args);
             var connectionSettings = connectionStringArg is not null
-                ? new ConnectionSettings(connectionStringArg)
+                ? ConnectionSettings.FromConnectionString(connectionStringArg)
                 : ConnectionSettings.FromPrompts();
 
             // Database name can be empty if not provided by connection string
