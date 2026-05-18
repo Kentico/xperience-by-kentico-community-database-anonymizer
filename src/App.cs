@@ -1,8 +1,3 @@
-using System.Data;
-
-using CMS.DataEngine;
-using CMS.Helpers;
-
 using Spectre.Console;
 
 using XperienceCommunity.DatabaseAnonymizer.Models;
@@ -22,10 +17,8 @@ namespace XperienceCommunity.DatabaseAnonymizer
         /// <summary>
         /// Runs the console application.
         /// </summary>
-        /// <param name="args">
-        /// Optional command-line arguments. Supports <c>--connection-string &lt;value&gt;</c>
-        /// (or <c>-c &lt;value&gt;</c>) to provide a full SQL connection string, bypassing
-        /// the individual connection prompts.
+        /// <param name="args">Optional command-line arguments. Supports <c>--connection-string &lt;value&gt;</c> (or 
+        /// <c>-c &lt;value&gt;</c>) to provide a full SQL connection string, bypassing the individual connection prompts.
         /// </param>
         public async Task Run(string[]? args = null)
         {
@@ -50,61 +43,16 @@ namespace XperienceCommunity.DatabaseAnonymizer
         {
             string? connectionStringArg = TryGetConnectionStringArg(args);
             var connectionSettings = connectionStringArg is not null
-                ? new ConnectionSettings { ConnectionString = connectionStringArg }
-                : PromptConnectionSettings();
+                ? new ConnectionSettings(connectionStringArg)
+                : ConnectionSettings.FromPrompts();
 
-            // If the database name is already provided (via connection string or individual prompts), skip selection.
-            if (!string.IsNullOrEmpty(connectionSettings.DatabaseName)
-                || !string.IsNullOrEmpty(connectionSettings.GetDatabaseFromConnectionString()))
+            // Database name can be empty if not provided by connection string
+            if (string.IsNullOrEmpty(connectionSettings.DatabaseName))
             {
-                return connectionSettings;
+                connectionSettings.SetDatabaseFromPrompt();
             }
-
-            var databaseNames = GetDatabaseNames(connectionSettings);
-            if (!databaseNames.Any())
-            {
-                throw new InvalidOperationException("Failed to retrieve databases from server");
-            }
-
-            string databaseTitle = $"[{Constants.PROMPT_COLOR}]Database:[/] ";
-            connectionSettings.DatabaseName = AnsiConsole.Prompt(new SelectionPrompt<string>()
-            {
-                Title = databaseTitle
-            }.AddChoices(databaseNames));
-            // SelectionPrompts do not appear in console after selection, so print the selected value
-            AnsiConsole.Markup(databaseTitle + connectionSettings.DatabaseName);
 
             return connectionSettings;
-        }
-
-
-        private static ConnectionSettings PromptConnectionSettings()
-        {
-            const string connectionStringChoice = "Full connection string";
-            const string individualFieldsChoice = "Individual fields (data source, user, password)";
-            string mode = AnsiConsole.Prompt(new SelectionPrompt<string>()
-            {
-                Title = $"[{Constants.PROMPT_COLOR}]How would you like to provide connection details?[/]"
-            }.AddChoices(connectionStringChoice, individualFieldsChoice));
-
-            if (mode == connectionStringChoice)
-            {
-                string connectionString = AnsiConsole.Prompt(new TextPrompt<string>(
-                    $"[{Constants.PROMPT_COLOR}]Connection string:[/] ")
-                { IsSecret = true });
-                // Validate format early with a clear error message. Use the lenient base builder
-                // so keywords unknown to System.Data.SqlClient (e.g. "Command Timeout") are accepted.
-                _ = new System.Data.Common.DbConnectionStringBuilder { ConnectionString = connectionString };
-
-                return new ConnectionSettings { ConnectionString = connectionString };
-            }
-
-            return new ConnectionSettings()
-            {
-                DataSource = AnsiConsole.Prompt(new TextPrompt<string>($"[{Constants.PROMPT_COLOR}]Data source:[/] ")),
-                UserID = AnsiConsole.Prompt(new TextPrompt<string>($"[{Constants.PROMPT_COLOR}]User ID:[/] ")),
-                Password = AnsiConsole.Prompt(new TextPrompt<string>($"[{Constants.PROMPT_COLOR}]Password:[/] ") { IsSecret = true })
-            };
         }
 
 
@@ -137,22 +85,6 @@ namespace XperienceCommunity.DatabaseAnonymizer
             }
 
             return null;
-        }
-
-
-        private static IEnumerable<string> GetDatabaseNames(ConnectionSettings connectionSettings)
-        {
-            using (new CMSConnectionScope(connectionSettings.ToConnectionString()))
-            {
-                string query = "SELECT name FROM master.dbo.sysdatabases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')";
-                var result = ConnectionHelper.ExecuteQuery(query, null, QueryTypeEnum.SQLQuery);
-                if (result.Tables.Count == 0)
-                {
-                    return [];
-                }
-
-                return result.Tables[0].Rows.OfType<DataRow>().Select(r => ValidationHelper.GetString(r[0], string.Empty));
-            }
         }
     }
 }
