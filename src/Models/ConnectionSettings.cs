@@ -146,7 +146,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
         public static ConnectionSettings FromPrompts()
         {
             const string connectionStringChoice = "Full connection string";
-            const string individualFieldsChoice = "Individual fields (data source, user, password)";
+            const string individualFieldsChoice = "Individual fields (data source, authentication method)";
             string mode = AnsiConsole.Prompt(new SelectionPrompt<string>()
             {
                 Title = $"[{Constants.PROMPT_COLOR}]How would you like to provide connection details?[/]"
@@ -214,7 +214,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
                 return string.IsNullOrEmpty(name) ? null : name;
             }
 
-            return builder.ConnectionString;
+            return null;
         }
     }
 }
