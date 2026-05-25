@@ -1876,7 +1876,8 @@
           "Kentico.Xperience.Libraries": "[13.0.207, )",
           "Microsoft.Extensions.Hosting": "[8.0.0, )",
           "Newtonsoft.Json": "[13.0.3, )",
-          "Spectre.Console": "[0.49.0, )"
+          "Spectre.Console": "[0.49.0, )",
+          "System.CommandLine": "[2.0.8, )"
         }
       },
       "Autofac": {
@@ -1988,6 +1989,12 @@
         "requested": "[0.49.0, )",
         "resolved": "0.49.0",
         "contentHash": "1s+hhYq5fcrqCvZhrNOPehAmCZJM6cjro85g1Qirvmm1tys+/sfFJgePCGcxr+S/nONZ/lCDTflPda3C+WlBdg=="
+      },
+      "System.CommandLine": {
+        "type": "CentralTransitive",
+        "requested": "[2.0.8, )",
+        "resolved": "2.0.8",
+        "contentHash": "FbpgF8p/ClXnoXEWLjQB34kNh5rsLewEgIgLyVzLDucAOQ4cNs7ec9Cam7gdKPruSb6zp4Mx8htZGTL4/5PJPg=="
       }
     }
   }

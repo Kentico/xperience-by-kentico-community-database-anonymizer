@@ -1,3 +1,5 @@
+using System.CommandLine;
+
 using Spectre.Console;
 
 using XperienceCommunity.DatabaseAnonymizer.Models;
@@ -10,6 +12,7 @@ namespace XperienceCommunity.DatabaseAnonymizer
     /// </summary>
     internal class App(IAnonymizerService anonymizerService, IAnonymizationTableProvider anonymizationTableProvider)
     {
+        private const string CONNECTION_STRING_ARGNAME = "--connection-string";
         private readonly IAnonymizerService anonymizerService = anonymizerService;
         private readonly IAnonymizationTableProvider anonymizationTableProvider = anonymizationTableProvider;
 
@@ -20,7 +23,31 @@ namespace XperienceCommunity.DatabaseAnonymizer
         /// <param name="args">Optional command-line arguments. Supports <c>--connection-string &lt;value&gt;</c> (or 
         /// <c>-c &lt;value&gt;</c>) to provide a full SQL connection string, bypassing the individual connection prompts.
         /// </param>
-        public async Task Run(string[]? args = null)
+        public Task Run(string[] args)
+        {
+            var connStringOption = new Option<string>(CONNECTION_STRING_ARGNAME, "-c", "--connection-string=");
+            connStringOption.Validators.Add(result =>
+            {
+                string? value = result.GetValue<string?>(CONNECTION_STRING_ARGNAME);
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    result.AddError($"Missing value for {CONNECTION_STRING_ARGNAME} argument.");
+                }
+            });
+            var rootCommand = new RootCommand() { connStringOption };
+
+            rootCommand.SetAction(RunInternal);
+            var parseResult = rootCommand.Parse(args);
+            if (parseResult.Errors.Any())
+            {
+                throw new InvalidOperationException(parseResult.Errors[0].Message);
+            }
+
+            return parseResult.InvokeAsync();
+        }
+
+
+        private async Task RunInternal(ParseResult parseResult)
         {
             try
             {
@@ -28,7 +55,9 @@ namespace XperienceCommunity.DatabaseAnonymizer
                 AnsiConsole.Markup($"[{Constants.EMPHASIS_COLOR}]The anonymization process is irreversible! Please make sure you are" +
                     $" executing the process against a backup.[/]");
                 AnsiConsole.WriteLine();
-                var connectionSettings = GetConnectionSettings(args);
+
+                string? connectionString = parseResult.GetValue<string?>(CONNECTION_STRING_ARGNAME);
+                var connectionSettings = GetConnectionSettings(connectionString);
                 anonymizerService.Anonymize(connectionSettings, tablesConfig);
             }
             catch (Exception ex)
@@ -39,11 +68,10 @@ namespace XperienceCommunity.DatabaseAnonymizer
         }
 
 
-        private static ConnectionSettings GetConnectionSettings(string[]? args)
+        private static ConnectionSettings GetConnectionSettings(string? connectionString)
         {
-            string? connectionStringArg = TryGetConnectionStringArg(args);
-            var connectionSettings = connectionStringArg is not null
-                ? ConnectionSettings.FromConnectionString(connectionStringArg)
+            var connectionSettings = !string.IsNullOrWhiteSpace(connectionString)
+                ? ConnectionSettings.FromConnectionString(connectionString)
                 : ConnectionSettings.FromPrompts();
 
             // Database name can be empty if not provided by connection string
@@ -53,38 +81,6 @@ namespace XperienceCommunity.DatabaseAnonymizer
             }
 
             return connectionSettings;
-        }
-
-
-        private static string? TryGetConnectionStringArg(string[]? args)
-        {
-            if (args is null || args.Length == 0)
-            {
-                return null;
-            }
-
-            for (int i = 0; i < args.Length; i++)
-            {
-                string arg = args[i];
-                if (string.Equals(arg, "--connection-string", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(arg, "-c", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (i + 1 >= args.Length)
-                    {
-                        throw new ArgumentException($"Missing value for '{arg}' argument.");
-                    }
-
-                    return args[i + 1];
-                }
-
-                const string inlinePrefix = "--connection-string=";
-                if (arg.StartsWith(inlinePrefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    return arg[inlinePrefix.Length..];
-                }
-            }
-
-            return null;
         }
     }
 }

@@ -54,5 +54,20 @@ namespace XperienceCommunity.DatabaseAnonymizer.Tests
                 cs.IntegratedSecurity
             ), Arg.Any<TablesConfiguration>());
         }
+
+
+        [TestCase(["-u"])]
+        [TestCase(["--unknown-arg"])]
+        [TestCase(["-c"])]
+        [TestCase(["-c", ""])]
+        [TestCase(["--connection-string"])]
+        [TestCase(["--connection-string", ""])]
+        [TestCase(["--connection-string="])]
+        public async Task Run_InvalidArguments_Throws(params string[] args)
+        {
+            var app = new App(anonymizerService, anonymizationTableProvider);
+
+            Assert.ThrowsAsync<InvalidOperationException>(() => app.Run(args));
+        }
     }
 }
