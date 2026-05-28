@@ -18,7 +18,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Tests
     public class AnonymizerServiceTests : ContainerNotBuiltUnitTests
     {
         private const string FAKE_TABLE = "FakeTable";
-        private const string ANON_COLUMN = "Anyonymize_Me";
+        private const string ANON_COLUMN = "Anonymize_Me";
         private const string NULL_COLUMN = "Null_Me";
         private readonly IDataConnection dataConnection = Substitute.For<IDataConnection>();
         private readonly AnonymizerService anonymizerService = new(Substitute.For<IAnonymizationLogger>(), new TestTableManager());
@@ -120,7 +120,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Tests
             resultTable.Columns.Add(ANON_COLUMN, typeof(string));
             resultTable.Columns.Add(NULL_COLUMN, typeof(string));
 
-            // Add rows- primary key starts a 0
+            // Add rows- primary key starts at 0
             for (int i = 0; i < numRows; i++)
             {
                 resultTable.Rows.Add(i, $"anon_value_{i}", $"null_value_{i}");

@@ -63,7 +63,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
             }.AddChoices(databaseNames));
 
             // SelectionPrompts do not appear in console after selection, so print the selected value
-            AnsiConsole.Markup(databaseTitle + DatabaseName);
+            AnsiConsole.Markup(databaseTitle + Markup.Escape(DatabaseName ?? string.Empty));
         }
 
 
