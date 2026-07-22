@@ -1,4 +1,5 @@
-﻿using CMS.ContactManagement;
+﻿using CMS.Commerce;
+using CMS.ContactManagement;
 using CMS.EmailEngine;
 using CMS.Globalization;
 using CMS.Membership;
@@ -40,6 +41,14 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
                 ]
             },
             new TableConfiguration() {
+                TableName = "CMS_Member",
+                AnonymizeColumns =
+                [
+                    nameof(MemberInfo.MemberEmail),
+                    nameof(MemberInfo.MemberName),
+                ]
+            },
+            new TableConfiguration() {
                 TableName = "CMS_State",
                 AnonymizeColumns =
                 [
@@ -59,25 +68,54 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
                 ]
             },
             new TableConfiguration() {
-                TableName = "OM_Account",
+                TableName = "Commerce_Customer",
                 AnonymizeColumns =
                 [
-                    nameof(AccountInfo.AccountName),
-                    nameof(AccountInfo.AccountAddress1),
-                    nameof(AccountInfo.AccountAddress2),
-                    nameof(AccountInfo.AccountCity),
-                    nameof(AccountInfo.AccountZIP),
-                    nameof(AccountInfo.AccountWebSite),
-                    nameof(AccountInfo.AccountPhone),
-                    nameof(AccountInfo.AccountEmail),
-                    nameof(AccountInfo.AccountFax),
-                    nameof(AccountInfo.AccountNotes),
+                    nameof(CustomerInfo.CustomerFirstName),
+                    nameof(CustomerInfo.CustomerLastName),
+                    nameof(CustomerInfo.CustomerEmail),
+                    nameof(CustomerInfo.CustomerPhone),
+                ]
+            },
+            new TableConfiguration() {
+                TableName = "Commerce_CustomerAddress",
+                AnonymizeColumns =
+                [
+                    nameof(CustomerAddressInfo.CustomerAddressFirstName),
+                    nameof(CustomerAddressInfo.CustomerAddressLastName),
+                    nameof(CustomerAddressInfo.CustomerAddressCompany),
+                    nameof(CustomerAddressInfo.CustomerAddressEmail),
+                    nameof(CustomerAddressInfo.CustomerAddressPhone),
+                    nameof(CustomerAddressInfo.CustomerAddressLine1),
+                    nameof(CustomerAddressInfo.CustomerAddressLine2),
+                    nameof(CustomerAddressInfo.CustomerAddressCity),
+                    nameof(CustomerAddressInfo.CustomerAddressZip),
                 ],
                 NullColumns =
                 [
-                    nameof(AccountInfo.AccountCountryID),
-                    nameof(AccountInfo.AccountStateID),
+                    nameof(CustomerAddressInfo.CustomerAddressCountryID),
+                    nameof(CustomerAddressInfo.CustomerAddressStateID),
+                ]
+            },
+            new TableConfiguration() {
+                TableName = "Commerce_OrderAddress",
+                AnonymizeColumns =
+                [
+                    nameof(OrderAddressInfo.OrderAddressFirstName),
+                    nameof(OrderAddressInfo.OrderAddressLastName),
+                    nameof(OrderAddressInfo.OrderAddressCompany),
+                    nameof(OrderAddressInfo.OrderAddressEmail),
+                    nameof(OrderAddressInfo.OrderAddressPhone),
+                    nameof(OrderAddressInfo.OrderAddressLine1),
+                    nameof(OrderAddressInfo.OrderAddressLine2),
+                    nameof(OrderAddressInfo.OrderAddressCity),
+                    nameof(OrderAddressInfo.OrderAddressZip),
                 ],
+                NullColumns =
+                [
+                    nameof(OrderAddressInfo.OrderAddressCountryID),
+                    nameof(OrderAddressInfo.OrderAddressStateID),
+                ]
             },
             new TableConfiguration() {
                 TableName = "OM_Contact",
