@@ -1,7 +1,4 @@
-using System.Data;
-
-using CMS.DataEngine;
-using CMS.Helpers;
+using System.CommandLine;
 
 using Spectre.Console;
 
@@ -15,6 +12,7 @@ namespace XperienceCommunity.DatabaseAnonymizer
     /// </summary>
     internal class App(IAnonymizerService anonymizerService, IAnonymizationTableProvider anonymizationTableProvider)
     {
+        private const string CONNECTION_STRING_ARGNAME = "--connection-string";
         private readonly IAnonymizerService anonymizerService = anonymizerService;
         private readonly IAnonymizationTableProvider anonymizationTableProvider = anonymizationTableProvider;
 
@@ -22,7 +20,34 @@ namespace XperienceCommunity.DatabaseAnonymizer
         /// <summary>
         /// Runs the console application.
         /// </summary>
-        public async Task Run()
+        /// <param name="args">Optional command-line arguments. Supports <c>--connection-string &lt;value&gt;</c> (or 
+        /// <c>-c &lt;value&gt;</c>) to provide a full SQL connection string, bypassing the individual connection prompts.
+        /// </param>
+        public Task Run(string[] args)
+        {
+            var connStringOption = new Option<string>(CONNECTION_STRING_ARGNAME, "-c", "--connection-string=");
+            connStringOption.Validators.Add(result =>
+            {
+                string? value = result.GetValue<string?>(CONNECTION_STRING_ARGNAME);
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    result.AddError($"Missing value for {CONNECTION_STRING_ARGNAME} argument.");
+                }
+            });
+            var rootCommand = new RootCommand() { connStringOption };
+
+            rootCommand.SetAction(RunInternal);
+            var parseResult = rootCommand.Parse(args);
+            if (parseResult.Errors.Any())
+            {
+                throw new InvalidOperationException(parseResult.Errors[0].Message);
+            }
+
+            return parseResult.InvokeAsync();
+        }
+
+
+        private async Task RunInternal(ParseResult parseResult)
         {
             try
             {
@@ -30,7 +55,9 @@ namespace XperienceCommunity.DatabaseAnonymizer
                 AnsiConsole.Markup($"[{Constants.EMPHASIS_COLOR}]The anonymization process is irreversible! Please make sure you are" +
                     $" executing the process against a backup.[/]");
                 AnsiConsole.WriteLine();
-                var connectionSettings = GetConnectionSettings();
+
+                string? connectionString = parseResult.GetValue<string?>(CONNECTION_STRING_ARGNAME);
+                var connectionSettings = GetConnectionSettings(connectionString);
                 anonymizerService.Anonymize(connectionSettings, tablesConfig);
             }
             catch (Exception ex)
@@ -41,45 +68,19 @@ namespace XperienceCommunity.DatabaseAnonymizer
         }
 
 
-        private static ConnectionSettings GetConnectionSettings()
+        private static ConnectionSettings GetConnectionSettings(string? connectionString)
         {
-            var connectionSettings = new ConnectionSettings()
-            {
-                DataSource = AnsiConsole.Prompt(new TextPrompt<string>($"[{Constants.PROMPT_COLOR}]Data source:[/] ")),
-                UserID = AnsiConsole.Prompt(new TextPrompt<string>($"[{Constants.PROMPT_COLOR}]User ID:[/] ")),
-                Password = AnsiConsole.Prompt(new TextPrompt<string>($"[{Constants.PROMPT_COLOR}]Password:[/] ") { IsSecret = true })
-            };
-            var databaseNames = GetDatabaseNames(connectionSettings);
-            if (!databaseNames.Any())
-            {
-                throw new InvalidOperationException("Failed to retrieve databases from server");
-            }
+            var connectionSettings = !string.IsNullOrWhiteSpace(connectionString)
+                ? ConnectionSettings.FromConnectionString(connectionString)
+                : ConnectionSettings.FromPrompts();
 
-            string databaseTitle = $"[{Constants.PROMPT_COLOR}]Database:[/] ";
-            connectionSettings.DatabaseName = AnsiConsole.Prompt(new SelectionPrompt<string>()
+            // Database name can be empty if not provided by connection string
+            if (string.IsNullOrEmpty(connectionSettings.DatabaseName))
             {
-                Title = databaseTitle
-            }.AddChoices(databaseNames));
-            // SelectionPrompts do not appear in console after selection, so print the selected value
-            AnsiConsole.Markup(databaseTitle + connectionSettings.DatabaseName);
+                connectionSettings.SetDatabaseFromPrompt();
+            }
 
             return connectionSettings;
-        }
-
-
-        private static IEnumerable<string> GetDatabaseNames(ConnectionSettings connectionSettings)
-        {
-            using (new CMSConnectionScope(connectionSettings.ToConnectionString()))
-            {
-                string query = "SELECT name FROM master.dbo.sysdatabases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')";
-                var result = ConnectionHelper.ExecuteQuery(query, null, QueryTypeEnum.SQLQuery);
-                if (result.Tables.Count == 0)
-                {
-                    return [];
-                }
-
-                return result.Tables[0].Rows.OfType<DataRow>().Select(r => ValidationHelper.GetString(r[0], string.Empty));
-            }
         }
     }
 }
