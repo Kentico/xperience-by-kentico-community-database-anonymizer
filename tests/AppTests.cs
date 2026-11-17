@@ -20,6 +20,10 @@ namespace XperienceCommunity.DatabaseAnonymizer.Tests
         private const string PASSWORD = "testpass";
 
 
+        [TearDown]
+        public void TearDown() => anonymizerService.ClearReceivedCalls();
+
+
         [Test]
         public async Task Run_ConnectionStringWithUserCredentials_SetsUserCredentials()
         {
@@ -63,11 +67,45 @@ namespace XperienceCommunity.DatabaseAnonymizer.Tests
         [TestCase(["--connection-string"])]
         [TestCase(["--connection-string", ""])]
         [TestCase(["--connection-string="])]
-        public async Task Run_InvalidArguments_Throws(params string[] args)
+        public async Task Run_InvalidArguments_ThrowsInvalidOperationException(params string[] args)
         {
             var app = new App(anonymizerService, anonymizationTableProvider);
 
             Assert.ThrowsAsync<InvalidOperationException>(() => app.Run(args));
+            anonymizerService.DidNotReceiveWithAnyArgs().Anonymize(default!, default!);
+        }
+
+
+        [Test]
+        public async Task Run_ConnectionStringWithMicrosoftSqlClientKeyword_IsAccepted()
+        {
+            // "Command Timeout" is only supported by Microsoft.Data.SqlClient, but is a valid keyword
+            string connectionStringArg = $"Data Source={DATA_SOURCE};Initial Catalog={DATABASE_NAME};Integrated Security=True;" +
+                "Command Timeout=60;";
+            var app = new App(anonymizerService, anonymizationTableProvider);
+
+            await app.Run(["-c", connectionStringArg]);
+
+            anonymizerService.Received().Anonymize(Arg.Is<ConnectionSettings>(cs =>
+                cs.DataSource == DATA_SOURCE &&
+                cs.DatabaseName == DATABASE_NAME &&
+                cs.IntegratedSecurity
+            ), Arg.Any<TablesConfiguration>());
+        }
+
+
+        [TestCase(["-c", "somerandomtext"])]
+        [TestCase(["-c", "Initial Catalog=xperience;Integrated Security=True;"])]
+        [TestCase(["-c", "Data Source=localhost;Initial Catalog=xperience;"])]
+        [TestCase(["-c", "Data Source=localhost;Initial Catalog=xperience;Integrated Security=True;InvalidParameter=xxx"])]
+        [TestCase(["-c", "Data Source=localhost;Initial Catalog=xperience;Integrated Security=notabool;"])]
+        [TestCase(["-c", "Data Source=localhost;Initial Catalog=xperience;Password=testpass;"])]
+        public async Task Run_MalformedConnectionString_ThrowsArgumentException(params string[] args)
+        {
+            var app = new App(anonymizerService, anonymizationTableProvider);
+
+            Assert.ThrowsAsync<ArgumentException>(() => app.Run(args));
+            anonymizerService.DidNotReceiveWithAnyArgs().Anonymize(default!, default!);
         }
     }
 }

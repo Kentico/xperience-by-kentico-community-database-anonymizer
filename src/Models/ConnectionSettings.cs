@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using System.Data.Common;
 using System.Data.SqlClient;
 
 using CMS.DataEngine;
@@ -7,6 +6,8 @@ using CMS.DataEngine;
 using CMS.Helpers;
 
 using Spectre.Console;
+
+using MicrosoftSqlConnectionStringBuilder = Microsoft.Data.SqlClient.SqlConnectionStringBuilder;
 
 namespace XperienceCommunity.DatabaseAnonymizer.Models
 {
@@ -104,38 +105,43 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
         /// Creates a new <see cref="ConnectionSettings"/> from a connection string.
         /// </summary>
         /// <param name="connectionString">A full SQL connection string.</param>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="connectionString"/> is malformed, contains an
+        /// unrecognized keyword, or is missing the data source or authentication details.</exception>
         public static ConnectionSettings FromConnectionString(string connectionString)
         {
-            // Parse with the lenient base builder so keywords unknown to System.Data.SqlClient
-            // (e.g. "Command Timeout") do not throw during parsing...
-            var parsed = new DbConnectionStringBuilder()
-            {
-                ConnectionString = connectionString
-            };
+            ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
-            // ...then copy only keywords supported by System.Data.SqlClient, since Kentico uses
-            // that provider internally and will throw on unknown keywords when opening the connection.
-            var sqlBuilder = new SqlConnectionStringBuilder();
-            foreach (string key in parsed.Keys)
+            // Parse with the Microsoft.Data.SqlClient builder, which throws ArgumentException for malformed strings and
+            // unrecognized keywords, but still accepts keywords newer than System.Data.SqlClient (e.g. "Command Timeout").
+            // Only the properties below are kept, so unsupported keywords never reach the System.Data.SqlClient provider.
+            MicrosoftSqlConnectionStringBuilder builder;
+            try
             {
-                try
-                {
-                    sqlBuilder[key] = parsed[key];
-                }
-                catch (ArgumentException)
-                {
-                    // Silently drop keywords the SqlClient provider does not recognize
-                    // (e.g. "Command Timeout" is only supported by Microsoft.Data.SqlClient).
-                }
+                builder = new MicrosoftSqlConnectionStringBuilder(connectionString);
+            }
+            catch (Exception ex) when (ex is ArgumentException or FormatException or InvalidOperationException)
+            {
+                throw new ArgumentException($"The connection string is invalid: {ex.Message}", nameof(connectionString), ex);
+            }
+
+            if (string.IsNullOrWhiteSpace(builder.DataSource))
+            {
+                throw new ArgumentException("The connection string must specify a data source.", nameof(connectionString));
+            }
+
+            if (!builder.IntegratedSecurity && string.IsNullOrWhiteSpace(builder.UserID))
+            {
+                throw new ArgumentException("The connection string must specify either 'Integrated Security=True' or a 'User ID'.",
+                    nameof(connectionString));
             }
 
             return new ConnectionSettings()
             {
-                DataSource = sqlBuilder.DataSource,
-                UserID = sqlBuilder.UserID,
-                Password = sqlBuilder.Password,
-                DatabaseName = GetDatabaseFromConnectionString(connectionString),
-                IntegratedSecurity = sqlBuilder.IntegratedSecurity
+                DataSource = builder.DataSource,
+                UserID = builder.UserID,
+                Password = builder.Password,
+                DatabaseName = builder.InitialCatalog,
+                IntegratedSecurity = builder.IntegratedSecurity
             };
         }
 
@@ -192,29 +198,6 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
 
                 return result.Tables[0].Rows.OfType<DataRow>().Select(r => ValidationHelper.GetString(r[0], string.Empty));
             }
-        }
-
-
-        /// <summary>
-        /// Returns the database name parsed from <paramref name="connectionString"/>, if any.
-        /// </summary>
-        private static string? GetDatabaseFromConnectionString(string connectionString)
-        {
-            if (string.IsNullOrWhiteSpace(connectionString))
-            {
-                return null;
-            }
-
-            var builder = new DbConnectionStringBuilder { ConnectionString = connectionString };
-            if (builder.TryGetValue("Initial Catalog", out object? value)
-                || builder.TryGetValue("Database", out value))
-            {
-                string name = value.ToString() ?? string.Empty;
-
-                return string.IsNullOrEmpty(name) ? null : name;
-            }
-
-            return null;
         }
     }
 }
