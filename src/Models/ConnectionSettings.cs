@@ -54,7 +54,7 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
             var databaseNames = GetDatabaseNames();
             if (!databaseNames.Any())
             {
-                throw new InvalidOperationException("Failed to retrieve databases from server");
+                throw new InvalidOperationException("Failed to retrieve databases from server. Check the connection settings and try again.");
             }
 
             string databaseTitle = $"[{Constants.PROMPT_COLOR}]Database:[/] ";
@@ -187,16 +187,23 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
 
         private IEnumerable<string> GetDatabaseNames()
         {
-            using (new CMSConnectionScope(ToConnectionString()))
+            try
             {
-                string query = "SELECT name FROM master.dbo.sysdatabases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')";
-                var result = ConnectionHelper.ExecuteQuery(query, null, QueryTypeEnum.SQLQuery);
-                if (result.Tables.Count == 0)
+                using (new CMSConnectionScope(ToConnectionString()))
                 {
-                    return [];
-                }
+                    string query = "SELECT name FROM master.dbo.sysdatabases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')";
+                    var result = ConnectionHelper.ExecuteQuery(query, null, QueryTypeEnum.SQLQuery);
+                    if (result.Tables.Count == 0)
+                    {
+                        return [];
+                    }
 
-                return result.Tables[0].Rows.OfType<DataRow>().Select(r => ValidationHelper.GetString(r[0], string.Empty));
+                    return result.Tables[0].Rows.OfType<DataRow>().Select(r => ValidationHelper.GetString(r[0], string.Empty));
+                }
+            }
+            catch
+            {
+                return [];
             }
         }
     }

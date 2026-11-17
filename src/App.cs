@@ -83,7 +83,7 @@ namespace XperienceCommunity.DatabaseAnonymizer
 
         private static RootCommand GetRootCommand()
         {
-            var connStringOption = new Option<string>(CONNECTION_STRING_ARGNAME, "-c", "--connection-string=");
+            var connStringOption = new Option<string>(CONNECTION_STRING_ARGNAME, "-c");
             connStringOption.Validators.Add(result =>
             {
                 string? value = result.GetValue<string?>(CONNECTION_STRING_ARGNAME);

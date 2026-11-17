@@ -60,6 +60,20 @@ namespace XperienceCommunity.DatabaseAnonymizer.Tests
         }
 
 
+        // Database can be omitted from connection string to be selected from prompt later
+        [TestCase(["-c", "Data Source=localhost;Integrated Security=True;"])]
+        [TestCase(["--connection-string", "Data Source=localhost;Initial Catalog=xperience;User ID=sa;Password=test"])]
+        [TestCase(["--connection-string=Data Source=localhost;Initial Catalog=xperience;Integrated Security=True;"])]
+        // "Command Timeout" is only supported by Microsoft.Data.SqlClient, but is a valid keyword
+        [TestCase(["-c", "Data Source=localhost;Initial Catalog=xperience;Integrated Security=True;Command Timeout=60;"])]
+        public async Task Run_ValidArguments_DoesNotThrow(params string[] args)
+        {
+            var app = new App(anonymizerService, anonymizationTableProvider);
+
+            Assert.DoesNotThrowAsync(() => app.Run(args));
+        }
+
+
         [TestCase(["-u"])]
         [TestCase(["--unknown-arg"])]
         [TestCase(["-c"])]
@@ -73,24 +87,6 @@ namespace XperienceCommunity.DatabaseAnonymizer.Tests
 
             Assert.ThrowsAsync<InvalidOperationException>(() => app.Run(args));
             anonymizerService.DidNotReceiveWithAnyArgs().Anonymize(default!, default!);
-        }
-
-
-        [Test]
-        public async Task Run_ConnectionStringWithMicrosoftSqlClientKeyword_IsAccepted()
-        {
-            // "Command Timeout" is only supported by Microsoft.Data.SqlClient, but is a valid keyword
-            string connectionStringArg = $"Data Source={DATA_SOURCE};Initial Catalog={DATABASE_NAME};Integrated Security=True;" +
-                "Command Timeout=60;";
-            var app = new App(anonymizerService, anonymizationTableProvider);
-
-            await app.Run(["-c", connectionStringArg]);
-
-            anonymizerService.Received().Anonymize(Arg.Is<ConnectionSettings>(cs =>
-                cs.DataSource == DATA_SOURCE &&
-                cs.DatabaseName == DATABASE_NAME &&
-                cs.IntegratedSecurity
-            ), Arg.Any<TablesConfiguration>());
         }
 
 
