@@ -185,21 +185,22 @@ namespace XperienceCommunity.DatabaseAnonymizer.Models
         }
 
 
-        private IEnumerable<string> GetDatabaseNames()
+        private List<string> GetDatabaseNames()
         {
             try
             {
+                var databaseNames = new List<string>();
                 using (new CMSConnectionScope(ToConnectionString()))
                 {
                     string query = "SELECT name FROM master.dbo.sysdatabases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')";
-                    var result = ConnectionHelper.ExecuteQuery(query, null, QueryTypeEnum.SQLQuery);
-                    if (result.Tables.Count == 0)
+                    using var reader = ConnectionHelper.ExecuteReader(query, null, QueryTypeEnum.SQLQuery, CommandBehavior.Default);
+                    while (reader?.Read() ?? false)
                     {
-                        return [];
+                        databaseNames.Add(reader.GetString(0));
                     }
-
-                    return result.Tables[0].Rows.OfType<DataRow>().Select(r => ValidationHelper.GetString(r[0], string.Empty));
                 }
+
+                return databaseNames;
             }
             catch
             {
